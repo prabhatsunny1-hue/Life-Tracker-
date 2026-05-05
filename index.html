@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="theme-color" content="#070b12"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Life Tracker"/>
+<title>Life Tracker</title>
+<style>
+:root{
+  --bg:#070b12;--card:#0d1420;--border:#1a2540;
+  --green:#00e676;--purple:#a855f7;--amber:#f59e0b;
+  --cyan:#22d3ee;--pink:#f43f5e;--blue:#3b82f6;
+  --text:#e2e8f0;--muted:#64748b;--success:#10b981;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;overflow:hidden}
+#app{height:100%;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative}
+/* TOP BAR */
+#topbar{
+  position:sticky;top:0;z-index:100;
+  background:rgba(7,11,18,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  padding:14px 16px 12px;display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+#topbar .title{font-size:17px;font-weight:700;letter-spacing:-0.3px}
+#topbar .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+#topbar .status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--green);font-weight:600}
+/* CONTENT */
+#content{flex:1;overflow-y:auto;padding:14px 14px 88px;-webkit-overflow-scrolling:touch}
+/* BOTTOM NAV */
+#nav{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:480px;
+  background:rgba(13,20,32,0.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-top:1px solid var(--border);
+  display:flex;padding:8px 0 max(12px,env(safe-area-inset-bottom));z-index:200;
+}
+.nav-btn{
+  flex:1;background:none;border:none;cursor:pointer;color:var(--muted);
+  display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;position:relative;
+}
+.nav-btn.active{color:var(--green)}
+.nav-btn .nav-icon{font-size:20px;line-height:1}
+.nav-btn .nav-label{font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase}
+.nav-btn.active::before{
+  content:'';position:absolute;top:-8px;width:28px;height:3px;
+  border-radius:99px;background:var(--green);box-shadow:0 0 10px var(--green);
+}
+/* PAGES */
+.page{display:none}
+.page.active{display:block}
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:12px}
+.card-hero{background:linear-gradient(135deg,#0f1e35,#0d1420)}
+.sec-title{display:flex;align-items:center;gap:8px;margin:16px 0 10px;font-size:16px;font-weight:700;letter-spacing:-0.3px}
+.sec-title .emoji{font-size:18px}
+/* BADGES */
+.badge{display:inline-block;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700}
+/* INPUTS */
+input,textarea,select{
+  background:#1a2540;border:none;border-radius:10px;padding:10px 12px;
+  color:var(--text);font-size:14px;font-family:inherit;outline:none;width:100%;
+}
+textarea{resize:none;line-height:1.6}
+input::placeholder,textarea::placeholder{color:var(--muted)}
+select{appearance:none;-webkit-appearance:none}
+/* BUTTONS */
+.btn{width:100%;padding:12px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.15s}
+.btn:active{opacity:0.8}
+.btn-green{background:var(--green);color:#000}
+.btn-purple{background:var(--purple);color:#fff}
+.btn-cyan{background:var(--cyan);color:#000}
+.btn-pink{background:var(--pink);color:#fff}
+.btn-amber{background:var(--amber);color:#000}
+/* RING */
+.ring-wrap{position:relative;flex-shrink:0}
+.ring-wrap .ring-inner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column}
+/* PROGRESS BAR */
+.prog-track{background:#1a2540;border-radius:99px;height:6px;overflow:hidden;margin:8px 0 4px}
+.prog-fill{height:100%;border-radius:99px;transition:width 0.5s ease}
+/* HABIT ITEM */
+.habit-item{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:8px;
+  background:var(--card);border:1px solid var(--border);border-radius:14px;cursor:pointer;transition:all 0.2s;
+}
+.habit-item.done{background:rgba(0,230,118,0.08);border-color:rgba(0,230,118,0.3)}
+.habit-check{width:26px;height:26px;border-radius:50%;background:#1a2540;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all 0.2s}
+.habit-item.done .habit-check{background:var(--green);color:#000;font-weight:900}
+.habit-label{flex:1;font-size:14px;font-weight:500;color:var(--muted)}
+.habit-item.done .habit-label{color:var(--text);font-weight:600}
+/* TABS */
+.tab-row{display:flex;gap:8px;margin-bottom:14px}
+.tab-btn{flex:1;padding:9px 0;border-radius:10px;border:none;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;font-family:inherit;transition:all 0.2s;background:var(--card);color:var(--muted)}
+.tab-btn.active{background:var(--green);color:#000}
+/* TOGGLE */
+.toggle{width:46px;height:26px;border-radius:99px;background:#1a2540;cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0}
+.toggle.on{background:var(--green)}
+.toggle::after{content:'';width:20px;height:20px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;transition:left 0.2s}
+.toggle.on::after{left:23px}
+/* GRID */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+/* STAT BOX */
+.stat-box{background:#0a1020;border-radius:12px;padding:10px 6px;text-align:center}
+.stat-box .stat-val{font-size:22px;font-weight:900;color:var(--cyan);border:none;background:none;width:100%;text-align:center;padding:0;font-family:inherit}
+.stat-box .stat-lbl{font-size:10px;color:var(--muted)}
+/* SCROLL CHIPS */
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chip{padding:6px 12px;border-radius:20px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;background:#1a2540;color:var(--muted);transition:all 0.15s}
+.chip.active{background:var(--purple);color:#fff}
+/* SEPARATOR */
+.sep{height:1px;background:var(--border);margin:10px 0}
+/* LOG ITEM */
+.log-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
+.log-item:last-child{border:none}
+/* HERO STATS ROW */
+.stats-row{display:flex;gap:16px;margin-top:12px}
+.stat-pill{text-align:center}
+.stat-pill .num{font-size:20px;font-weight:800}
+.divider{width:1px;background:var(--border)}
+/* TOAST */
+#toast{
+  position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+  background:var(--green);color:#000;padding:10px 20px;border-radius:99px;
+  font-size:13px;font-weight:700;z-index:999;opacity:0;transition:opacity 0.3s;pointer-events:none;
+}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div id="app">
+  <div id="topbar">
+    <div><div class="title" id="topTitle">🏠 Dashboard</div></div>
+    <div class="status"><div class="dot"></div>Active</div>
+  </div>
+  <div id="content">
+
+    <!-- ════════════════════════════ DASHBOARD ════════════════════════════ -->
+    <div class="page active" id="page-dashboard">
+      <div class="card card-hero" style="position:relative;overflow:hidden;padding:20px 18px">
+        <div style="position:absolute;top:-20px;right:-20px;width:120px;height:120px;background:radial-gradient(circle,rgba(0,230,118,0.15),transparent 70%);border-radius:50%"></div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:4px">Welcome back 👋</div>
+        <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px">Life Goals Tracker</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px">30 yrs • Lean Consultant • Blueprint Mode 🧬</div>
+        <div class="stats-row" style="margin-top:14px">
+          <div class="stat-pill"><div class="num" id="dash-overall" style="color:var(--green)">--%</div><div style="font-size:11px;color:var(--muted)">Overall</div></div>
+          <div class="divider"></div>
+          <div class="stat-pill"><div class="num" style="color:var(--amber)">7</div><div style="font-size:11px;color:var(--muted)">Goals</div></div>
+          <div class="divider"></div>
+          <div class="stat-pill"><div class="num" id="dash-bj" style="color:var(--cyan)">--%</div><div style="font-size:11px;color:var(--muted)">Blueprint</div></div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:0.5px;margin-bottom:10px">ALL GOALS</div>
+      <div id="goals-list"></div>
+    </div>
+
+    <!-- ════════════════════════════ FINANCE ════════════════════════════ -->
+    <div class="page" id="page-finance">
+      <div class="card" style="background:linear-gradient(135deg,#0f2010,#0d1420)">
+        <div class="sec-title" style="margin-top:0;color:var(--green)"><span class="emoji">📈</span>Portfolio Overview</div>
+        <div style="display:flex;justify-content:space-between">
+          <div><div style="font-size:12px;color:var(--muted)">Invested</div><div style="font-size:20px;font-weight:800" id="fin-invested">$0</div></div>
+          <div><div style="font-size:12px;color:var(--muted)">Current</div><div style="font-size:20px;font-weight:800;color:var(--green)" id="fin-current">$0</div></div>
+          <div><div style="font-size:12px;color:var(--muted)">Gain/Loss</div><div style="font-size:20px;font-weight:800" id="fin-gain">$0</div></div>
+        </div>
+      </div>
+      <div class="sec-title" style="color:var(--amber)"><span class="emoji">💰</span>Savings Goals</div>
+      <div id="savings-list"></div>
+      <div class="sec-title" style="color:var(--green)"><span class="emoji">📊</span>Stock Holdings</div>
+      <div id="stocks-list"></div>
+      <div class="card" style="border:1px dashed var(--border)">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px">+ ADD STOCK</div>
+        <div class="grid2" style="gap:8px;margin-bottom:8px">
+          <input id="fin-ticker" placeholder="Ticker (AAPL)"/>
+          <input id="fin-shares" placeholder="Shares" type="number"/>
+          <input id="fin-buy" placeholder="Buy price $" type="number"/>
+          <input id="fin-current-price" placeholder="Current $" type="number"/>
+        </div>
+        <button class="btn btn-green" onclick="addStock()">Add Stock</button>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════ BLUEPRINT ════════════════════════════ -->
+    <div class="page" id="page-blueprint">
+      <div class="card" style="background:linear-gradient(135deg,#0f1a2e,#0a1528);text-align:center;padding:20px">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;letter-spacing:1px">BLUEPRINT PROTOCOL — BRYAN JOHNSON</div>
+        <div style="display:flex;justify-content:center">
+          <div class="ring-wrap" style="width:100px;height:100px">
+            <svg width="100" height="100" style="transform:rotate(-90deg)">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="#1a2540" stroke-width="8"/>
+              <circle cx="50" cy="50" r="42" fill="none" stroke="var(--green)" stroke-width="8"
+                id="bj-ring-circle" stroke-dasharray="0 264" stroke-linecap="round" style="transition:stroke-dasharray 0.6s ease"/>
+            </svg>
+            <div class="ring-inner">
+              <div style="font-size:22px;font-weight:900;color:var(--green)" id="bj-pct">0%</div>
+              <div style="font-size:10px;color:var(--muted)">today</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:12px;font-size:15px;font-weight:700" id="bj-score-text">0/16 habits done</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">Goal: Never die 🧬</div>
+      </div>
+      <div class="tab-row">
+        <button class="tab-btn active" onclick="bjTab('habits',this)">Habits</button>
+        <button class="tab-btn" onclick="bjTab('biomarkers',this)">Biomarkers</button>
+        <button class="tab-btn" onclick="bjTab('supplements',this)">Supplements</button>
+      </div>
+      <div id="bj-habits">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="font-size:12px;color:var(--muted);font-weight:600" id="bj-date-label"></div>
+          <button onclick="resetHabits()" style="font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer">Reset All</button>
+        </div>
+        <div id="habits-list"></div>
+      </div>
+      <div id="bj-biomarkers" style="display:none">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Test every 3–6 months. Enter your latest results.</div>
+        <div id="bio-list"></div>
+      </div>
+      <div id="bj-supplements" style="display:none">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Toggle what you're currently taking 💊</div>
+        <div id="supp-list"></div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════ HEALTH ════════════════════════════ -->
+    <div class="page" id="page-health">
+      <div class="sec-title" style="margin-top:0;color:var(--cyan)"><span class="emoji">📊</span>Body Stats (update monthly)</div>
+      <div class="card">
+        <div class="grid3" id="body-stats-grid"></div>
+      </div>
+      <div class="sec-title" style="color:var(--green)"><span class="emoji">🥗</span>Today's Nutrition</div>
+      <div class="card">
+        <div class="grid2" id="nutrition-grid" style="gap:8px"></div>
+      </div>
+      <div class="sec-title" style="color:var(--purple)"><span class="emoji">🏋️</span>Workout Log</div>
+      <div id="workout-log"></div>
+      <div class="card" style="border:1px dashed var(--border)">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px">+ LOG WORKOUT</div>
+        <div class="chips" id="workout-chips"></div>
+        <input id="workout-duration" placeholder="Duration (minutes)" type="number" style="margin-bottom:8px"/>
+        <input id="workout-notes" placeholder="Notes (optional)" style="margin-bottom:8px"/>
+        <button class="btn btn-purple" onclick="logWorkout()">Log Workout</button>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════ HOBBIES ════════════════════════════ -->
+    <div class="page" id="page-hobbies">
+      <div class="card card-hero" style="padding:16px 18px">
+        <div style="display:flex;gap:24px">
+          <div class="stat-pill"><div class="num" id="surf-count" style="color:var(--cyan)">0</div><div style="font-size:11px;color:var(--muted)">Sessions</div></div>
+          <div class="divider"></div>
+          <div class="stat-pill"><div class="num" id="surf-hours" style="color:var(--cyan)">0h</div><div style="font-size:11px;color:var(--muted)">Hours</div></div>
+          <div class="divider"></div>
+          <div class="stat-pill"><div class="num" id="surf-avg" style="color:var(--cyan)">-</div><div style="font-size:11px;color:var(--muted)">Avg Rating</div></div>
+        </div>
+      </div>
+      <div class="sec-title" style="color:var(--cyan)"><span class="emoji">🌊</span>Surf Sessions</div>
+      <div id="surf-log"></div>
+      <div class="card" style="border:1px dashed var(--border)">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px">+ LOG SURF SESSION</div>
+        <div class="grid2" style="gap:8px;margin-bottom:8px">
+          <input id="surf-location" placeholder="Location"/>
+          <input id="surf-waves" placeholder="Wave height (ft)"/>
+          <input id="surf-hrs" placeholder="Hours" type="number"/>
+          <input id="surf-rating" placeholder="Rating /10" type="number" min="1" max="10"/>
+        </div>
+        <button class="btn btn-cyan" onclick="logSurf()">Log Session</button>
+      </div>
+      <div class="sec-title" style="color:var(--amber)"><span class="emoji">🌍</span>Bucket List</div>
+      <div id="bucket-list"></div>
+    </div>
+
+    <!-- ════════════════════════════ PERSONAL ════════════════════════════ -->
+    <div class="page" id="page-personal">
+      <div class="sec-title" style="margin-top:0;color:var(--pink)"><span class="emoji">🌟</span>This Week's Goals</div>
+      <div class="card" id="personal-goals-list"></div>
+      <div class="card" style="background:rgba(244,63,94,0.08);border-color:rgba(244,63,94,0.25)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:700">Weekly Score</div>
+          <div style="font-size:24px;font-weight:900;color:var(--pink)" id="personal-score">0/6</div>
+        </div>
+      </div>
+      <div class="sec-title" style="color:var(--pink)"><span class="emoji">🎉</span>Social & Dating Log</div>
+      <div id="social-log"></div>
+      <div class="card" style="border:1px dashed var(--border)">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px">+ LOG EVENT / DATE</div>
+        <input id="social-activity" placeholder="What did you do?" style="margin-bottom:8px"/>
+        <input id="social-next" placeholder="Next step / follow up" style="margin-bottom:8px"/>
+        <input id="social-rating" placeholder="Rating /10" type="number" style="margin-bottom:8px"/>
+        <button class="btn btn-pink" onclick="addSocialEvent()">Add Entry</button>
+      </div>
+      <div class="sec-title" style="color:var(--amber)"><span class="emoji">📓</span>Daily Reflection</div>
+      <div class="card">
+        <textarea id="reflection-text" rows="5" placeholder="Write today's thoughts, wins, lessons..." oninput="saveReflection()"></textarea>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <div id="nav">
+    <button class="nav-btn active" onclick="goPage('dashboard',this,'🏠 Dashboard')"><div class="nav-icon">⊞</div><div class="nav-label">Home</div></button>
+    <button class="nav-btn" onclick="goPage('finance',this,'💰 Finance')"><div class="nav-icon">💰</div><div class="nav-label">Finance</div></button>
+    <button class="nav-btn" onclick="goPage('blueprint',this,'🧬 Blueprint')"><div class="nav-icon">🧬</div><div class="nav-label">Blueprint</div></button>
+    <button class="nav-btn" onclick="goPage('health',this,'💪 Health')"><div class="nav-icon">💪</div><div class="nav-label">Health</div></button>
+    <button class="nav-btn" onclick="goPage('hobbies',this,'🏄 Hobbies')"><div class="nav-icon">🏄</div><div class="nav-label">Hobbies</div></button>
+    <button class="nav-btn" onclick="goPage('personal',this,'💑 Personal')"><div class="nav-icon">💑</div><div class="nav-label">Personal</div></button>
+  </div>
+</div>
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────
+const DEFAULTS = {
+  goals:[
+    {id:'house',label:'Dream House',emoji:'🏡',target:'2028',color:'#f59e0b',pct:10},
+    {id:'car',label:'Car',emoji:'🚗',target:'2026',color:'#3b82f6',pct:25},
+    {id:'invest',label:'Investor',emoji:'📈',target:'Ongoing',color:'#00e676',pct:30},
+    {id:'love',label:'Girlfriend',emoji:'💑',target:'2026',color:'#f43f5e',pct:20},
+    {id:'hobbies',label:'Surf & Travel',emoji:'🏄',target:'Ongoing',color:'#22d3ee',pct:40},
+    {id:'body',label:'Great Body',emoji:'💪',target:'Ongoing',color:'#a855f7',pct:35},
+    {id:'longevity',label:'Bryan Johnson Blueprint',emoji:'🧬',target:'Ongoing',color:'#00e676',pct:5},
+  ],
+  savings:[
+    {id:'house',label:'🏡 Dream House',target:500000,saved:50000},
+    {id:'car',label:'🚗 Car',target:35000,saved:8750},
+    {id:'emergency',label:'🛡️ Emergency Fund',target:20000,saved:5000},
+  ],
+  stocks:[
+    {ticker:'AAPL',shares:10,buy:150,current:175},
+    {ticker:'MSFT',shares:5,buy:280,current:320},
+    {ticker:'VOO',shares:8,buy:400,current:450},
+  ],
+  habits:{},
+  biomarkers:[
+    {name:'Testosterone',optimal:'600-900 ng/dL',value:''},
+    {name:'HbA1c',optimal:'< 5.4%',value:''},
+    {name:'LDL Cholesterol',optimal:'< 100 mg/dL',value:''},
+    {name:'ApoB',optimal:'< 80 mg/dL',value:''},
+    {name:'Vitamin D',optimal:'50-80 ng/mL',value:''},
+    {name:'VO2 Max',optimal:'> 50 ml/kg/min',value:''},
+    {name:'HRV',optimal:'> 60 ms',value:''},
+    {name:'Resting HR',optimal:'< 55 bpm',value:''},
+    {name:'CRP',optimal:'< 1.0 mg/L',value:''},
+    {name:'Fasting Glucose',optimal:'70-90 mg/dL',value:''},
+    {name:'Biological Age',optimal:'< 30 yrs',value:''},
+    {name:'IGF-1',optimal:'150-250 ng/mL',value:''},
+  ],
+  supplements:[
+    {name:'Vitamin D3+K2',dose:'5000 IU',timing:'Morning',taking:false},
+    {name:'Omega-3 Fish Oil',dose:'3g EPA+DHA',timing:'Morning',taking:false},
+    {name:'Magnesium Glycinate',dose:'400mg',timing:'Night',taking:false},
+    {name:'NMN (NAD+)',dose:'500mg',timing:'Morning',taking:false},
+    {name:'Creatine',dose:'5g',timing:'Post-workout',taking:false},
+    {name:'Ashwagandha',dose:'600mg',timing:'Night',taking:false},
+    {name:'Zinc',dose:'15mg',timing:'Morning',taking:false},
+    {name:'CoQ10',dose:'200mg',timing:'Morning',taking:false},
+    {name:'Lycopene',dose:'10mg',timing:'Morning',taking:false},
+    {name:'B12 Methylcobalamin',dose:'1000 mcg',timing:'Morning',taking:false},
+  ],
+  bodyStats:{weight:'',bodyFat:'',muscle:'',waist:'',sleep:'',hrv:''},
+  nutrition:{calories:'',protein:'',carbs:'',fat:'',water:''},
+  workouts:[
+    {date:'Mon',type:'Zone 2 Cardio',duration:60,notes:''},
+    {date:'Tue',type:'Gym',duration:60,notes:''},
+  ],
+  surfLog:[
+    {date:'Apr 20',location:'Uluwatu, Bali',waves:'4-6ft',hrs:2,rating:9},
+  ],
+  bucketList:[
+    {dest:'Pipeline, Hawaii 🌊',type:'Surf',status:'Planned'},
+    {dest:'Bali, Indonesia 🇮🇩',type:'Surf+Travel',status:'Done'},
+    {dest:'G-Land, Java 🌿',type:'Surf',status:'Wishlist'},
+    {dest:'Japan 🇯🇵',type:'Travel',status:'Planned'},
+    {dest:'Nazaré, Portugal 🏄',type:'Surf',status:'Wishlist'},
+    {dest:'Maldives 🏝️',type:'Travel',status:'Wishlist'},
+    {dest:'New Zealand 🇳🇿',type:'Travel',status:'Wishlist'},
+    {dest:'Morocco 🇲🇦',type:'Surf+Culture',status:'Wishlist'},
+  ],
+  personalGoals:[
+    {id:'style',label:'👔 Style & Grooming',goal:'Daily skincare + dress well',done:false},
+    {id:'social',label:'🗣️ Social Skills',goal:'1 event or new connection',done:false},
+    {id:'confidence',label:'⚡ Confidence',goal:'1 thing outside comfort zone',done:false},
+    {id:'dating',label:'💑 Dating Life',goal:'10+ messages / 1 date',done:false},
+    {id:'mindset',label:'📚 Mindset',goal:'20 pages self-improvement book',done:false},
+    {id:'network',label:'🤝 Network',goal:'2 new professionals connected',done:false},
+  ],
+  socialEvents:[
+    {date:'Apr 28',activity:'Networking event',nextStep:'Follow up on LinkedIn',rating:8},
+  ],
+  reflection:'',
+  selectedWorkoutType:'',
+};
+
+const BJ_HABITS=[
+  {id:'wake',label:'Wake same time every day',emoji:'⏰',cat:'Sleep'},
+  {id:'sunlight',label:'Morning sunlight (10 min)',emoji:'☀️',cat:'Circadian'},
+  {id:'no_late_eat',label:'No eating after 8pm',emoji:'🚫',cat:'Nutrition'},
+  {id:'nutrient_meal',label:'Nutrient-dense first meal',emoji:'🥗',cat:'Nutrition'},
+  {id:'no_junk',label:'No ultra-processed food',emoji:'🍎',cat:'Nutrition'},
+  {id:'cardio',label:'Zone 2 cardio 60 min',emoji:'🏃',cat:'Fitness'},
+  {id:'strength',label:'Strength training',emoji:'💪',cat:'Fitness'},
+  {id:'meditation',label:'Meditation / breathwork',emoji:'🧘',cat:'Mental'},
+  {id:'no_alcohol',label:'No alcohol',emoji:'🍺',cat:'Longevity'},
+  {id:'blue_light',label:'Blue light glasses after 8pm',emoji:'👓',cat:'Sleep'},
+  {id:'sleep_8h',label:'8.5h sleep (tracked)',emoji:'😴',cat:'Sleep'},
+  {id:'cold',label:'Cold shower / plunge',emoji:'🧊',cat:'Recovery'},
+  {id:'supplements',label:'Take supplement stack',emoji:'💊',cat:'Supplements'},
+  {id:'skincare',label:'Skincare + sunscreen routine',emoji:'🧴',cat:'Looks'},
+  {id:'journal',label:'Stress journal entry',emoji:'📓',cat:'Mental'},
+  {id:'no_screen',label:'Screen off by 9pm',emoji:'📵',cat:'Sleep'},
+];
+
+const CAT_COLORS={Sleep:'#a855f7',Circadian:'#f59e0b',Nutrition:'#00e676',Fitness:'#22d3ee',Mental:'#f43f5e',Longevity:'#00e676',Recovery:'#3b82f6',Supplements:'#f59e0b',Looks:'#f43f5e'};
+const WORKOUT_TYPES=['Gym','Zone 2 Cardio','Surfing','HIIT','Yoga','Run','Swimming','Rest'];
+const STATUS_COLORS={Done:'#10b981',Planned:'#22d3ee',Wishlist:'#f59e0b'};
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+let S={};
+function load(){
+  try{const d=localStorage.getItem('lifetracker');S=d?JSON.parse(d):JSON.parse(JSON.stringify(DEFAULTS));}
+  catch(e){S=JSON.parse(JSON.stringify(DEFAULTS));}
+  // ensure all keys exist
+  for(const k in DEFAULTS){if(S[k]===undefined)S[k]=JSON.parse(JSON.stringify(DEFAULTS[k]));}
+  // init habits for today
+  const todayKey=DAYS[new Date().getDay()];
+  if(!S.habits[todayKey]){S.habits[todayKey]={}; BJ_HABITS.forEach(h=>{S.habits[todayKey][h.id]=false;});}
+}
+function save(){localStorage.setItem('lifetracker',JSON.stringify(S));}
+
+// ─── NAVIGATION ───────────────────────────────────────────────
+function goPage(id,btn,title){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+  document.getElementById('topTitle').textContent=title;
+  document.getElementById('content').scrollTop=0;
+  renderPage(id);
+}
+
+function renderPage(id){
+  if(id==='dashboard')renderDashboard();
+  else if(id==='finance')renderFinance();
+  else if(id==='blueprint')renderBlueprint();
+  else if(id==='health')renderHealth();
+  else if(id==='hobbies')renderHobbies();
+  else if(id==='personal')renderPersonal();
+}
+
+// ─── TOAST ────────────────────────────────────────────────────
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.opacity='1';
+  setTimeout(()=>t.style.opacity='0',1800);
+}
+
+// ─── RING HELPER ──────────────────────────────────────────────
+function ringHTML(pct,color,size,stroke,innerHTML){
+  const r=(size-stroke*2)/2;const circ=2*Math.PI*r;const dash=(pct/100)*circ;
+  return `<div class="ring-wrap" style="width:${size}px;height:${size}px">
+    <svg width="${size}" height="${size}" style="transform:rotate(-90deg)">
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#1a2540" stroke-width="${stroke}"/>
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}"
+        stroke-dasharray="${dash} ${circ}" stroke-linecap="round" style="transition:stroke-dasharray 0.5s"/>
+    </svg>
+    <div class="ring-inner">${innerHTML}</div>
+  </div>`;
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────
+function renderDashboard(){
+  const todayKey=DAYS[new Date().getDay()];
+  const habits=S.habits[todayKey]||{};
+  const done=Object.values(habits).filter(Boolean).length;
+  const bjPct=Math.round((done/BJ_HABITS.length)*100);
+  const overall=Math.round(S.goals.reduce((a,g)=>a+g.pct,0)/S.goals.length);
+  document.getElementById('dash-overall').textContent=overall+'%';
+  document.getElementById('dash-bj').textContent=bjPct+'%';
+
+  let html='';
+  S.goals.forEach((g,i)=>{
+    html+=`<div class="card" style="padding:14px 16px">
+      <div style="display:flex;align-items:center;gap:14px">
+        ${ringHTML(g.pct,g.color,54,4,`<span style="font-size:18px">${g.emoji}</span>`)}
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:15px">${g.label}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">Target: ${g.target}</div>
+          <div class="prog-track"><div class="prog-fill" style="width:${g.pct}%;background:${g.color}"></div></div>
+        </div>
+        <div style="font-size:18px;font-weight:800;color:${g.color}">${g.pct}%</div>
+      </div>
+      <input type="range" min="0" max="100" value="${g.pct}"
+        oninput="updateGoal(${i},this.value)"
+        style="width:100%;margin-top:10px;accent-color:${g.color}"/>
+    </div>`;
+  });
+  document.getElementById('goals-list').innerHTML=html;
+}
+function updateGoal(i,v){
+  S.goals[i].pct=+v;save();
+  // live update ring & number
+  renderDashboard();
+}
+
+// ─── FINANCE ─────────────────────────────────────────────────
+function renderFinance(){
+  // Portfolio
+  const invested=S.stocks.reduce((a,s)=>a+s.buy*s.shares,0);
+  const current=S.stocks.reduce((a,s)=>a+s.current*s.shares,0);
+  const gain=current-invested;
+  document.getElementById('fin-invested').textContent='$'+invested.toLocaleString();
+  document.getElementById('fin-current').textContent='$'+current.toLocaleString();
+  const gainEl=document.getElementById('fin-gain');
+  gainEl.textContent=(gain>=0?'+':'')+'$'+Math.round(gain).toLocaleString();
+  gainEl.style.color=gain>=0?'var(--green)':'var(--pink)';
+
+  // Savings
+  let html='';
+  S.savings.forEach((s,i)=>{
+    const pct=Math.min(100,Math.round((s.saved/s.target)*100));
+    const rem=s.target-s.saved;
+    const col=pct>50?'var(--green)':pct>25?'var(--amber)':'var(--pink)';
+    html+=`<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <div style="font-weight:700;font-size:15px">${s.label}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">$${s.saved.toLocaleString()} / $${s.target.toLocaleString()}</div>
+        </div>
+        <span class="badge" style="background:${col}22;color:${col};border:1px solid ${col}44">${pct}%</span>
+      </div>
+      <div class="prog-track" style="height:8px"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--amber),var(--green))"></div></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">Remaining: $${rem.toLocaleString()}</div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <input placeholder="Update saved amount $" type="number"
+          onblur="updateSaving(${i},this.value);this.value=''"
+          style="flex:1"/>
+      </div>
+    </div>`;
+  });
+  document.getElementById('savings-list').innerHTML=html;
+
+  // Stocks
+  html='';
+  S.stocks.forEach((s,i)=>{
+    const val=s.current*s.shares;
+    const gain=(s.current-s.buy)*s.shares;
+    const gainPct=((s.current-s.buy)/s.buy*100).toFixed(1);
+    html+=`<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:800;font-size:16px">${s.ticker}</div>
+          <div style="font-size:12px;color:var(--muted)">${s.shares} shares @ $${s.buy}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-weight:700;font-size:15px">$${val.toLocaleString()}</div>
+          <div style="font-size:12px;color:${gain>=0?'var(--green)':'var(--pink)'}">${gain>=0?'+':''}$${Math.round(gain)} (${gainPct}%)</div>
+        </div>
+      </div>
+      <div style="margin-top:8px">
+        <input placeholder="Update current price $" type="number"
+          onblur="updateStockPrice(${i},this.value);this.value=''"
+          style="font-size:13px"/>
+      </div>
+    </div>`;
+  });
+  document.getElementById('stocks-list').innerHTML=html;
+}
+function updateSaving(i,v){if(v&&!isNaN(v)){S.savings[i].saved=+v;save();renderFinance();toast('Saved ✓');}}
+function updateStockPrice(i,v){if(v&&!isNaN(v)){S.stocks[i].current=+v;save();renderFinance();toast('Updated ✓');}}
+function addStock(){
+  const t=document.getElementById('fin-ticker').value.trim().toUpperCase();
+  const sh=+document.getElementById('fin-shares').value;
+  const b=+document.getElementById('fin-buy').value;
+  const c=+document.getElementById('fin-current-price').value;
+  if(!t||!sh)return toast('Enter ticker & shares');
+  S.stocks.push({ticker:t,shares:sh,buy:b||0,current:c||b||0});
+  save();renderFinance();
+  ['fin-ticker','fin-shares','fin-buy','fin-current-price'].forEach(id=>document.getElementById(id).value='');
+  toast('Stock added ✓');
+}
+
+// ─── BLUEPRINT ────────────────────────────────────────────────
+function renderBlueprint(){
+  const todayKey=DAYS[new Date().getDay()];
+  if(!S.habits[todayKey]){S.habits[todayKey]={};BJ_HABITS.forEach(h=>{S.habits[todayKey][h.id]=false;});}
+  const h=S.habits[todayKey];
+  const done=Object.values(h).filter(Boolean).length;
+  const pct=Math.round((done/BJ_HABITS.length)*100);
+  const circ=2*Math.PI*42;
+  document.getElementById('bj-ring-circle').setAttribute('stroke-dasharray',`${(pct/100)*circ} ${circ}`);
+  document.getElementById('bj-pct').textContent=pct+'%';
+  document.getElementById('bj-score-text').textContent=done+'/'+BJ_HABITS.length+' habits done';
+
+  const days=new Date();
+  document.getElementById('bj-date-label').textContent=
+    DAYS[days.getDay()]+' '+days.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+
+  let html='';
+  BJ_HABITS.forEach(habit=>{
+    const isDone=h[habit.id]||false;
+    const catCol=CAT_COLORS[habit.cat]||'var(--cyan)';
+    html+=`<div class="habit-item${isDone?' done':''}" onclick="toggleHabit('${habit.id}')">
+      <div class="habit-check">${isDone?'✓':''}</div>
+      <div class="habit-label">${habit.emoji} ${habit.label}</div>
+      <span class="badge" style="background:${catCol}22;color:${catCol};font-size:10px">${habit.cat}</span>
+    </div>`;
+  });
+  document.getElementById('habits-list').innerHTML=html;
+
+  // Biomarkers
+  html='';
+  S.biomarkers.forEach((b,i)=>{
+    html+=`<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:700;font-size:14px">${b.name}</div>
+          <div style="font-size:11px;color:var(--green);margin-top:2px">Optimal: ${b.optimal}</div>
+        </div>
+        <input value="${b.value}" placeholder="Result"
+          onchange="updateBiomarker(${i},this.value)"
+          style="width:100px;text-align:center;color:var(--cyan);font-weight:700;font-size:14px"/>
+      </div>
+    </div>`;
+  });
+  document.getElementById('bio-list').innerHTML=html;
+
+  // Supplements
+  html='';
+  S.supplements.forEach((s,i)=>{
+    html+=`<div class="card">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:14px">${s.name}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${s.dose} • ${s.timing}</div>
+        </div>
+        <div class="toggle${s.taking?' on':''}" onclick="toggleSupp(${i})"></div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('supp-list').innerHTML=html;
+}
+function toggleHabit(id){
+  const todayKey=DAYS[new Date().getDay()];
+  S.habits[todayKey][id]=!S.habits[todayKey][id];
+  save();renderBlueprint();
+}
+function resetHabits(){
+  const todayKey=DAYS[new Date().getDay()];
+  BJ_HABITS.forEach(h=>{S.habits[todayKey][h.id]=false;});
+  save();renderBlueprint();toast('Reset ✓');
+}
+function updateBiomarker(i,v){S.biomarkers[i].value=v;save();}
+function toggleSupp(i){S.supplements[i].taking=!S.supplements[i].taking;save();renderBlueprint();}
+function bjTab(name,btn){
+  ['habits','biomarkers','supplements'].forEach(t=>{
+    document.getElementById('bj-'+t).style.display=t===name?'block':'none';
+  });
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ─── HEALTH ───────────────────────────────────────────────────
+function renderHealth(){
+  const STATS=[
+    {key:'weight',label:'Weight',unit:'kg',target:'75'},
+    {key:'bodyFat',label:'Body Fat',unit:'%',target:'12'},
+    {key:'muscle',label:'Muscle',unit:'kg',target:'60'},
+    {key:'waist',label:'Waist',unit:'cm',target:'80'},
+    {key:'sleep',label:'Sleep',unit:'hrs',target:'8.5'},
+    {key:'hrv',label:'HRV',unit:'ms',target:'60+'},
+  ];
+  let html='';
+  STATS.forEach(s=>{
+    html+=`<div class="stat-box">
+      <div class="stat-lbl">${s.label}</div>
+      <input class="stat-val" value="${S.bodyStats[s.key]}" placeholder="${s.target}"
+        onchange="updateBodyStat('${s.key}',this.value)"/>
+      <div class="stat-lbl">${s.unit}</div>
+    </div>`;
+  });
+  document.getElementById('body-stats-grid').innerHTML=html;
+
+  const NUT=[
+    {key:'calories',label:'Calories',ph:'~2000 kcal'},
+    {key:'protein',label:'Protein (g)',ph:'~150g'},
+    {key:'carbs',label:'Carbs (g)',ph:'~200g'},
+    {key:'fat',label:'Fat (g)',ph:'~65g'},
+    {key:'water',label:'Water (L)',ph:'~3L'},
+  ];
+  html='';
+  NUT.forEach(n=>{
+    html+=`<div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:4px">${n.label}</div>
+      <input value="${S.nutrition[n.key]}" placeholder="${n.ph}"
+        onchange="updateNutrition('${n.key}',this.value)"/>
+    </div>`;
+  });
+  document.getElementById('nutrition-grid').innerHTML=html;
+
+  html='';
+  S.workouts.slice().reverse().forEach((w,i)=>{
+    html+=`<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:700;font-size:15px">${w.type}</div>
+          <div style="font-size:12px;color:var(--muted)">${w.date} • ${w.duration} min</div>
+          ${w.notes?`<div style="font-size:12px;color:var(--cyan);margin-top:2px">${w.notes}</div>`:''}
+        </div>
+        <button onclick="removeWorkout(${S.workouts.length-1-i})"
+          style="background:none;border:none;color:var(--pink);font-size:20px;cursor:pointer">×</button>
+      </div>
+    </div>`;
+  });
+  document.getElementById('workout-log').innerHTML=html||'<div style="color:var(--muted);font-size:13px;margin-bottom:12px">No workouts logged yet</div>';
+
+  html='';
+  WORKOUT_TYPES.forEach(t=>{
+    html+=`<button class="chip${S.selectedWorkoutType===t?' active':''}" onclick="selectWorkoutType('${t}')">${t}</button>`;
+  });
+  document.getElementById('workout-chips').innerHTML=html;
+}
+function updateBodyStat(k,v){S.bodyStats[k]=v;save();}
+function updateNutrition(k,v){S.nutrition[k]=v;save();}
+function selectWorkoutType(t){S.selectedWorkoutType=t;save();renderHealth();}
+function logWorkout(){
+  if(!S.selectedWorkoutType)return toast('Select a workout type');
+  const dur=document.getElementById('workout-duration').value;
+  const notes=document.getElementById('workout-notes').value;
+  const today=new Date();
+  S.workouts.push({date:DAYS[today.getDay()]+' '+today.toLocaleDateString('en-US',{month:'short',day:'numeric'}),type:S.selectedWorkoutType,duration:+dur||0,notes});
+  S.selectedWorkoutType='';
+  document.getElementById('workout-duration').value='';
+  document.getElementById('workout-notes').value='';
+  save();renderHealth();toast('Workout logged ✓');
+}
+function removeWorkout(i){S.workouts.splice(i,1);save();renderHealth();}
+
+// ─── HOBBIES ─────────────────────────────────────────────────
+function renderHobbies(){
+  document.getElementById('surf-count').textContent=S.surfLog.length;
+  const hrs=S.surfLog.reduce((a,s)=>a+(+s.hrs||0),0);
+  document.getElementById('surf-hours').textContent=hrs+'h';
+  const avg=S.surfLog.length?(S.surfLog.reduce((a,s)=>a+(+s.rating||0),0)/S.surfLog.length).toFixed(1):'-';
+  document.getElementById('surf-avg').textContent=avg;
+
+  let html='';
+  S.surfLog.slice().reverse().forEach(s=>{
+    html+=`<div class="card">
+      <div style="display:flex;justify-content:space-between">
+        <div>
+          <div style="font-weight:700;font-size:15px">${s.location}</div>
+          <div style="font-size:12px;color:var(--muted)">${s.date} • ${s.waves||'?'} • ${s.hrs}hrs</div>
+        </div>
+        <div style="font-weight:800;font-size:18px;color:var(--cyan)">${s.rating}/10</div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('surf-log').innerHTML=html||'<div style="color:var(--muted);font-size:13px;margin-bottom:12px">No sessions yet. Hit the waves! 🌊</div>';
+
+  html='';
+  S.bucketList.forEach((b,i)=>{
+    const col=STATUS_COLORS[b.status]||'var(--muted)';
+    html+=`<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:8px;background:var(--card);border:1px solid var(--border);border-radius:14px">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:14px">${b.dest}</div>
+        <div style="font-size:12px;color:var(--muted)">${b.type}</div>
+      </div>
+      <div style="text-align:right">
+        <span class="badge" style="background:${col}22;color:${col};border:1px solid ${col}44">${b.status}</span>
+        ${b.status!=='Done'?`<br><button onclick="markBucketDone(${i})" style="font-size:10px;color:var(--green);background:none;border:none;cursor:pointer;margin-top:4px">Mark Done ✓</button>`:''}
+      </div>
+    </div>`;
+  });
+  document.getElementById('bucket-list').innerHTML=html;
+}
+function logSurf(){
+  const loc=document.getElementById('surf-location').value.trim();
+  if(!loc)return toast('Enter location');
+  const today=new Date();
+  S.surfLog.push({
+    date:today.toLocaleDateString('en-US',{month:'short',day:'numeric'}),
+    location:loc,
+    waves:document.getElementById('surf-waves').value,
+    hrs:+document.getElementById('surf-hrs').value||0,
+    rating:+document.getElementById('surf-rating').value||0,
+  });
+  ['surf-location','surf-waves','surf-hrs','surf-rating'].forEach(id=>document.getElementById(id).value='');
+  save();renderHobbies();toast('Session logged ✓');
+}
+function markBucketDone(i){S.bucketList[i].status='Done';save();renderHobbies();toast('Checked off! 🎉');}
+
+// ─── PERSONAL ─────────────────────────────────────────────────
+function renderPersonal(){
+  let html='';
+  S.personalGoals.forEach((g,i)=>{
+    html+=`<div onclick="togglePersonalGoal(${i})" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:${i<S.personalGoals.length-1?'1px solid var(--border)':'none'};cursor:pointer">
+      <div style="width:22px;height:22px;border-radius:50%;flex-shrink:0;background:${g.done?'var(--pink)':'#1a2540'};display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;transition:all 0.2s">${g.done?'✓':''}</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:600;color:${g.done?'var(--muted)':'var(--text)'};text-decoration:${g.done?'line-through':'none'}">${g.label}</div>
+        <div style="font-size:11px;color:var(--muted)">${g.goal}</div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('personal-goals-list').innerHTML=html;
+
+  const done=S.personalGoals.filter(g=>g.done).length;
+  document.getElementById('personal-score').textContent=done+'/'+S.personalGoals.length;
+
+  html='';
+  S.socialEvents.slice().reverse().forEach(e=>{
+    html+=`<div class="card">
+      <div style="font-weight:700;font-size:15px">${e.activity}</div>
+      <div style="font-size:12px;color:var(--muted)">${e.date}${e.rating?' • Rating: '+e.rating+'/10':''}</div>
+      ${e.nextStep?`<div style="font-size:12px;color:var(--cyan);margin-top:4px">→ ${e.nextStep}</div>`:''}
+    </div>`;
+  });
+  document.getElementById('social-log').innerHTML=html||'<div style="color:var(--muted);font-size:13px;margin-bottom:12px">No events logged yet</div>';
+
+  document.getElementById('reflection-text').value=S.reflection||'';
+}
+function togglePersonalGoal(i){S.personalGoals[i].done=!S.personalGoals[i].done;save();renderPersonal();}
+function addSocialEvent(){
+  const a=document.getElementById('social-activity').value.trim();
+  if(!a)return toast('Enter activity');
+  const today=new Date();
+  S.socialEvents.push({
+    date:today.toLocaleDateString('en-US',{month:'short',day:'numeric'}),
+    activity:a,
+    nextStep:document.getElementById('social-next').value,
+    rating:+document.getElementById('social-rating').value||0,
+  });
+  ['social-activity','social-next','social-rating'].forEach(id=>document.getElementById(id).value='');
+  save();renderPersonal();toast('Event logged ✓');
+}
+function saveReflection(){S.reflection=document.getElementById('reflection-text').value;save();}
+
+// ─── PWA SETUP ────────────────────────────────────────────────
+function registerPWA(){
+  // Manifest
+  const manifest={
+    name:'Life Goals Tracker',
+    short_name:'Life Tracker',
+    description:'Your complete life & longevity tracker',
+    start_url:'.',
+    display:'standalone',
+    background_color:'#070b12',
+    theme_color:'#070b12',
+    orientation:'portrait',
+    icons:[
+      {src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="40" fill="%23070b12"/><text y="130" x="26" font-size="130">🎯</text></svg>',sizes:'192x192',type:'image/svg+xml'},
+      {src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="100" fill="%23070b12"/><text y="360" x="56" font-size="360">🎯</text></svg>',sizes:'512x512',type:'image/svg+xml'},
+    ]
+  };
+  const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+  const link=document.createElement('link');
+  link.rel='manifest';link.href=URL.createObjectURL(blob);
+  document.head.appendChild(link);
+
+  // Service Worker
+  if('serviceWorker' in navigator){
+    const sw=`
+const CACHE='lifetracker-v1';
+const ASSETS=['/'];
+self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));self.skipWaiting();});
+self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});
+self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('/'))));});`;
+    const swBlob=new Blob([sw],{type:'application/javascript'});
+    navigator.serviceWorker.register(URL.createObjectURL(swBlob))
+      .catch(e=>console.log('SW:',e));
+  }
+}
+
+// ─── INIT ─────────────────────────────────────────────────────
+load();
+registerPWA();
+renderDashboard();
+</script>
+</body>
+</html>
